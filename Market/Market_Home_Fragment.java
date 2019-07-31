@@ -3,6 +3,7 @@ package com.joytechnologies.market.Market;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -13,11 +14,19 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -32,6 +41,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.joytechnologies.market.R;
+import com.joytechnologies.market.SearchResult.ShowSearchResultFragment;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -57,6 +67,14 @@ public class Market_Home_Fragment extends Fragment implements OnMapReadyCallback
     private Location location;
     private Double currentLang,currentLong;
     Marker mCurrLocationMarker;
+
+
+    //search
+
+    private EditText editText;
+    private String SearchText;
+    private ImageButton imageButton;
+    private ShowSearchResultFragment showSearchResultFragment;
 /*
 need to implement method for map ready and getting the current location from the map
  */
@@ -73,7 +91,43 @@ need to implement method for map ready and getting the current location from the
         SupportMapFragment supportMapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.f_map);
         supportMapFragment.getMapAsync(this);
 
+        showSearchResultFragment = new ShowSearchResultFragment();
 
+
+        //edit text for the search
+
+        editText = view.findViewById(R.id.et_search);
+        imageButton = view.findViewById(R.id.ib_search);
+        //this is for the button now if the user press the button
+        imageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //Run The Search TAsk
+                RunSearchTask();
+            }
+        });
+
+
+        //this is for the keyboard
+
+        editText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN) {
+                    InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
+                    RunSearchTask();
+                    return true;
+                } else if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
+                    RunSearchTask();
+                    return true;
+
+
+                }
+                return false;
+            }
+        });
         return view;
     }
 
@@ -430,6 +484,34 @@ need to implement method for map ready and getting the current location from the
             return place;
         }
     }
+    private void RunSearchTask() {
+        SearchText = editText.getText().toString();
 
+        if (!SearchText.isEmpty()) {
+            Toast.makeText(getActivity(), "we will going to do some action", Toast.LENGTH_SHORT).show();
+            //now we will call our API to get the data
+            //we will send the data also
+            Bundle bundle = new Bundle();
+            bundle.putString("key", SearchText);
+// set Fragmentclass Arguments
+
+            showSearchResultFragment.setArguments(bundle);
+            SetFragment(showSearchResultFragment);
+            editText.getText().clear();
+
+
+        } else {
+
+            Toast.makeText(getActivity(), "Please Enter Some Keyword Ex: dress", Toast.LENGTH_SHORT).show();
+        }
+
+    }
+
+    private void SetFragment(Fragment fragment) {
+        FragmentTransaction fragmentTransaction = getActivity().getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.replace(R.id.frame_layout, fragment);
+        fragmentTransaction.addToBackStack("my_fragment").commit();
+
+    }
 
 }
