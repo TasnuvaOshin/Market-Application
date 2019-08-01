@@ -9,17 +9,25 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.util.Log;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
@@ -41,6 +49,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.navigation.NavigationView;
 import com.joytechnologies.market.R;
 import com.joytechnologies.market.SearchResult.ShowSearchResultFragment;
 import com.joytechnologies.market.SearchWithRoute.SearchRouteActivity;
@@ -58,6 +67,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 
 public class Market_Home_Fragment extends Fragment implements OnMapReadyCallback{
@@ -69,6 +79,10 @@ public class Market_Home_Fragment extends Fragment implements OnMapReadyCallback
     private Location location;
     private Double currentLang,currentLong;
     Marker mCurrLocationMarker;
+    private NavigationView navigationView;
+    private DrawerLayout drawerLayout;
+    private Toolbar mToolbar;
+    private ImageButton imageButtonDrawer;
 
 
     //search
@@ -80,6 +94,7 @@ public class Market_Home_Fragment extends Fragment implements OnMapReadyCallback
 /*
 need to implement method for map ready and getting the current location from the map
  */
+    @SuppressLint("WrongConstant")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -94,7 +109,20 @@ need to implement method for map ready and getting the current location from the
         supportMapFragment.getMapAsync(this);
 
         showSearchResultFragment = new ShowSearchResultFragment();
-
+        navigationView = view.findViewById(R.id.navView);
+        drawerLayout = view.findViewById(R.id.drawerLayout);
+        imageButtonDrawer = view.findViewById(R.id.ib_button);
+        drawerLayout.setDrawerShadow(R.drawable.drawer_shape,
+                GravityCompat.START);
+        imageButtonDrawer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(!drawerLayout.isDrawerOpen(GravityCompat.START)) drawerLayout.openDrawer(Gravity.START);
+                else drawerLayout.closeDrawer(Gravity.END);
+            }
+        });
+        SetUpSideDrawer();
+        SetupMenu();
 
         //edit text for the search
 
@@ -131,6 +159,34 @@ need to implement method for map ready and getting the current location from the
             }
         });
         return view;
+    }
+
+    private void SetupMenu() {
+        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+                switch (menuItem.getItemId()) {
+                    //menu handle
+
+                }
+
+                return false;
+            }
+        });
+    }
+
+    private void SetUpSideDrawer() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            mToolbar = Objects.requireNonNull(getActivity()).findViewById(R.id.toolbar);
+        }
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+        if (activity != null) {
+            activity.setSupportActionBar(mToolbar);
+        }
+
+        ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(getActivity(), drawerLayout, mToolbar, R.string.app_name, R.string.app_name);
+        actionBarDrawerToggle.getDrawerArrowDrawable().setColor(getResources().getColor(R.color.colorWhite));
+        drawerLayout.addDrawerListener(actionBarDrawerToggle);
     }
 
     @Override
@@ -391,7 +447,7 @@ need to implement method for map ready and getting the current location from the
 
                 markerOptions.title(name + " : " + vicinity);
 
-                markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+                markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET));
 
                 // Placing a marker on the touched position
                 Marker m = gMap.addMarker(markerOptions);

@@ -66,12 +66,15 @@ public class SearchRouteActivity extends AppCompatActivity implements OnMapReady
     private MarkerOptions origin, destination;
     private Polyline currentLine;
     int count = 0;
+    private MarkerOptions markerOptions;
+    private Double distance;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search_route);
-
+        // Creating a marker
+        markerOptions = new MarkerOptions();
         btDirection = findViewById(R.id.bt_getDirection);
         markerOptionsDirection = new ArrayList<>();
         SupportMapFragment supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.f_map);
@@ -79,14 +82,7 @@ public class SearchRouteActivity extends AppCompatActivity implements OnMapReady
         arrayList = new ArrayList<SearchDataModel>();
         arrayList.clear();
         new CallApiData().execute();
-        btDirection.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //initializing all the position
 
-
-            }
-        });
     }
 
 
@@ -130,9 +126,12 @@ public class SearchRouteActivity extends AppCompatActivity implements OnMapReady
                 @Override
                 public boolean onMarkerClick(Marker marker) {
 
+                   // new CallApiData().execute();
+
                     if (count == 0) {
                         // Toast.makeText(SearchRouteActivity.this, "Marker Clicked", Toast.LENGTH_SHORT).show();
                         //we need the api url for getting the route
+
                         String url = getUrl(currentLang, currentLong, marker.getPosition(), "driving");
         /*
         Fetchurl is the class that will get the value from the url
@@ -249,18 +248,28 @@ public class SearchRouteActivity extends AppCompatActivity implements OnMapReady
 
             for (int i = 0; i < arrayList.size(); i++) {
 
-                // Creating a marker
-                MarkerOptions markerOptions = new MarkerOptions();
+//                // Creating a marker
+//                MarkerOptions markerOptions = new MarkerOptions();
 
                 // Getting a place from the places list
 
                 // Getting latitude of the place
+
                 double lat = Double.parseDouble(arrayList.get(i).getLatitude());
 
                 // Getting longitude of the place
                 double lng = Double.parseDouble(arrayList.get(i).getLongitude());
                 Log.d("lat", String.valueOf(lat));
                 Log.d("lat", String.valueOf(lng));
+
+
+                //for counting distance
+
+                float results[] = new float[10];
+                Location.distanceBetween(currentLang, currentLong, lat, lng, results);
+                markerOptions.snippet("Distance=" + results[0] / 1000 + "km");
+                distance = (double) (results[0] / 1000);
+                Log.d("d", String.valueOf(distance));
 
                 // Getting name
                 String name = arrayList.get(i).getName();
@@ -276,12 +285,13 @@ public class SearchRouteActivity extends AppCompatActivity implements OnMapReady
                 // Setting the position for the marker
                 markerOptions.position(latLng);
 
-                markerOptions.title(name + " : " + vicinity);
+                markerOptions.title(name + " : " + vicinity + " : " + distance + " Km");
 
-                markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+                markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET));
 
                 // Placing a marker on the touched position
                 Marker m = gMap.addMarker(markerOptions);
+                m.showInfoWindow();
                 //for showing the current Position ALso
                 LatLng latLngs = new LatLng(location.getLatitude(), location.getLongitude());
                 MarkerOptions markerOptions2 = new MarkerOptions();
