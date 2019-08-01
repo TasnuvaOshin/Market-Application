@@ -1,17 +1,21 @@
-package com.joytechnologies.market.SearchResult;
+package com.joytechnologies.market.SearchWithRoute;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -31,6 +35,9 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.joytechnologies.market.Model.SearchDataModel;
 import com.joytechnologies.market.R;
+import com.joytechnologies.market.SearchResult.FetchURL;
+import com.joytechnologies.market.SearchResult.ShowSearchResultFragment;
+import com.joytechnologies.market.SearchResult.TaskLoadedCallback;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -45,36 +52,30 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
-
-
-public class ShowSearchResultFragment extends Fragment implements OnMapReadyCallback,TaskLoadedCallback  {
+public class SearchRouteActivity extends AppCompatActivity implements OnMapReadyCallback, TaskLoadedCallback {
     private static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
     private ArrayList<SearchDataModel> arrayList;
     private GoogleMap gMap;
     private Location location;
     private FusedLocationProviderClient fusedLocationProviderClient;
-    private Double currentLang,currentLong;
-    Marker mCurrLocationMarker,marker;
+    private Double currentLang, currentLong;
+    Marker mCurrLocationMarker, marker;
     private Button btDirection;
     List<MarkerOptions> markerOptionsDirection;
 
-    private MarkerOptions origin,destination;
+    private MarkerOptions origin, destination;
     private Polyline currentLine;
+    int count = 0;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_show_search_result, container, false);
-        Log.d("call","call");
-        btDirection = view.findViewById(R.id.bt_getDirection);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_search_route);
+
+        btDirection = findViewById(R.id.bt_getDirection);
         markerOptionsDirection = new ArrayList<>();
-        SupportMapFragment supportMapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.f_map);
-        supportMapFragment.getMapAsync(this);
+        SupportMapFragment supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.f_map);
+        supportMapFragment.getMapAsync(SearchRouteActivity.this);
         arrayList = new ArrayList<SearchDataModel>();
         arrayList.clear();
         new CallApiData().execute();
@@ -86,18 +87,13 @@ public class ShowSearchResultFragment extends Fragment implements OnMapReadyCall
 
             }
         });
-
-        return view;
     }
 
 
-
-
-
     //for getting the route we need to call the GetUrl Method
-    private String getUrl(Double startLat,Double startLng ,Double endLat,Double endLng, String direction) {
-        String Origin = "origin=" +startLat+ "," +startLng;
-        String Destination = "destination=" +endLat + "," +endLng;
+    private String getUrl(Double startLat, Double startLng, Double endLat, Double endLng, String direction) {
+        String Origin = "origin=" + startLat + "," + startLng;
+        String Destination = "destination=" + endLat + "," + endLng;
         String mode = "mode=driving";
         String parameter = Origin + "&" + Destination + "&" + mode;
         //this is the main api key for direction
@@ -110,7 +106,7 @@ public class ShowSearchResultFragment extends Fragment implements OnMapReadyCall
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        if(checkLocationPermission()) {
+        if (checkLocationPermission()) {
             gMap = googleMap;
             gMap.setMyLocationEnabled(true);
             //for getting the current Location for my place
@@ -121,41 +117,62 @@ public class ShowSearchResultFragment extends Fragment implements OnMapReadyCall
                 @Override
                 public void onInfoWindowClick(Marker marker) {
                     //we need the api url for getting the route
-                    String url = getUrl(currentLang,currentLong,marker.getPosition(),"driving");
+                    String url = getUrl(currentLang, currentLong, marker.getPosition(), "driving");
 
         /*
         Fetchurl is the class that will get the value from the url
          */
-                    //new FetchURL(MainActivity.this).execute(url,"driving");
-                    Toast.makeText(getActivity(), "Infowindow clicked", Toast.LENGTH_SHORT).show();
+                    new FetchURL(SearchRouteActivity.this).execute(url, "driving");
+                    // Toast.makeText(SearchRouteActivity.this, "Infowindow clicked", Toast.LENGTH_SHORT).show();
                 }
             });
             gMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
                 @Override
                 public boolean onMarkerClick(Marker marker) {
-                    Toast.makeText(getActivity(), "Marker Clicked", Toast.LENGTH_SHORT).show();
+
+                    if (count == 0) {
+                        // Toast.makeText(SearchRouteActivity.this, "Marker Clicked", Toast.LENGTH_SHORT).show();
+                        //we need the api url for getting the route
+                        String url = getUrl(currentLang, currentLong, marker.getPosition(), "driving");
+        /*
+        Fetchurl is the class that will get the value from the url
+         */
+                        new FetchURL(SearchRouteActivity.this).execute(url, "driving");
+                        // Toast.makeText(SearchRouteActivity.this, "Infowindow clicked", Toast.LENGTH_SHORT).show();
+                        count++;
+                    } else {
+                        //already map route is there so we need to
+
+                        count = 0;
+                        Intent i = new Intent(SearchRouteActivity.this, SearchRouteActivity.class);
+                        i.putExtra("key", getIntent().getStringExtra("key"));
+                        SearchRouteActivity.this.overridePendingTransition(0, 0);
+                        startActivity(i);
+
+
+                    }
                     return false;
                 }
             });
         }
     }
 
-    private String getUrl(Double originLat,Double originLan, LatLng destination, String driving) {
+    private String getUrl(Double originLat, Double originLan, LatLng destination, String driving) {
 
 
-        String start = "origin="+originLat+","+originLan;
-        String end ="destination="+destination.latitude+","+destination.longitude;
-        String mode = "mode="+driving;
-        String format = start+"&"+end+"&"+mode;
-        String apiUrl = "https://maps.googleapis.com/maps/api/directions/json?"+format+"&key=AIzaSyAycZ7yEq_SjhoFHcq60NptoLBTN-f2lwc";
+        String start = "origin=" + originLat + "," + originLan;
+        String end = "destination=" + destination.latitude + "," + destination.longitude;
+        String mode = "mode=" + driving;
+        String format = start + "&" + end + "&" + mode;
+        String apiUrl = "https://maps.googleapis.com/maps/api/directions/json?" + format + "&key=AIzaSyAycZ7yEq_SjhoFHcq60NptoLBTN-f2lwc";
         return apiUrl;
     }
 
     @Override
     public void onTaskDone(Object... values) {
-        if(currentLine != null){
+        if (currentLine != null) {
             currentLine.remove();
-        }else {
+        } else {
 
             currentLine = gMap.addPolyline((PolylineOptions) values[0]);
 
@@ -171,7 +188,7 @@ public class ShowSearchResultFragment extends Fragment implements OnMapReadyCall
         protected String doInBackground(String... strings) {
             URL url = null;
             try {
-                String key = getArguments().getString("key");
+                String key = getIntent().getStringExtra("key");
                 url = new URL("http://v-tube.xyz/market/item.php?key=" + key);
                 httpURLConnection = (HttpURLConnection) url.openConnection();
                 httpURLConnection.connect();
@@ -190,12 +207,12 @@ public class ShowSearchResultFragment extends Fragment implements OnMapReadyCall
 
                 myFile = stringBuffer.toString();
 
-                Log.d("data",myFile);
+                Log.d("data", myFile);
 
                 JSONArray parent = new JSONArray(myFile);
-                int j =0;
+                int j = 0;
 
-                while (j <= parent.length()){
+                while (j <= parent.length()) {
 
                     JSONObject child = parent.getJSONObject(j);
 
@@ -203,14 +220,13 @@ public class ShowSearchResultFragment extends Fragment implements OnMapReadyCall
                     String item = child.getString("item");
                     String latitude = child.getString("latitude");
                     String longitude = child.getString("longitude");
-                    String Address  = child.getString("Address");
+                    String Address = child.getString("Address");
                     String Website = child.getString("Website");
                     String Phone_no = child.getString("Phone_no");
                     String Offday = child.getString("Offday");
 
 
-
-                    arrayList.add(new SearchDataModel(Name,item,latitude,longitude,Address,Website,Phone_no,Offday));
+                    arrayList.add(new SearchDataModel(Name, item, latitude, longitude, Address, Website, Phone_no, Offday));
                     j++;
                 }
 
@@ -222,7 +238,6 @@ public class ShowSearchResultFragment extends Fragment implements OnMapReadyCall
             }
             return null;
         }
-
 
 
         @Override
@@ -268,14 +283,14 @@ public class ShowSearchResultFragment extends Fragment implements OnMapReadyCall
                 // Placing a marker on the touched position
                 Marker m = gMap.addMarker(markerOptions);
                 //for showing the current Position ALso
-                LatLng latLngs= new LatLng(location.getLatitude(), location.getLongitude());
+                LatLng latLngs = new LatLng(location.getLatitude(), location.getLongitude());
                 MarkerOptions markerOptions2 = new MarkerOptions();
                 markerOptions2.position(latLngs);
                 markerOptions2.title("Current Position");
                 markerOptions2.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
                 mCurrLocationMarker = gMap.addMarker(markerOptions2);
 
-              //  gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 15f));
+                //  gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 15f));
 
             }
 
@@ -283,11 +298,10 @@ public class ShowSearchResultFragment extends Fragment implements OnMapReadyCall
     }
 
 
-
     private void GetCurrentLocation() {
         if (checkLocationPermission()) {
             Log.d("debug", "Now We want to show our current location");
-            fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
+            fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(SearchRouteActivity.this);
             @SuppressLint("MissingPermission") Task LocationTask = fusedLocationProviderClient.getLastLocation();
 
             LocationTask.addOnCompleteListener(new OnCompleteListener() {
@@ -302,19 +316,15 @@ public class ShowSearchResultFragment extends Fragment implements OnMapReadyCall
 
                         currentLang = location.getLatitude();
                         currentLong = location.getLongitude();
-                         gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 15f));
+                        gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 15f));
                         Log.d("lat", String.valueOf(currentLang));
                         Log.d("long", String.valueOf(currentLong));
-
-
-
 
 
                         // UpdateCamera(new LatLng(location.getLatitude(), location.getLongitude()), DEFAULT_ZOOM, "Location");
                           /*
                           now we will get the api from which we can the nearby market
                            */
-
 
 
                     }
@@ -329,27 +339,26 @@ public class ShowSearchResultFragment extends Fragment implements OnMapReadyCall
 //checking the permission before the full process starts
 
 
-
     public boolean checkLocationPermission() {
-        if (ContextCompat.checkSelfPermission(getActivity(),
+        if (ContextCompat.checkSelfPermission(SearchRouteActivity.this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
 
             // Should we show an explanation?
-            if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
+            if (ActivityCompat.shouldShowRequestPermissionRationale(SearchRouteActivity.this,
                     Manifest.permission.ACCESS_FINE_LOCATION)) {
 
                 // Show an explanation to the user *asynchronously* -- don't block
                 // this thread waiting for the user's response! After the user
                 // sees the explanation, try again to request the permission.
-                new AlertDialog.Builder(getActivity())
+                new AlertDialog.Builder(SearchRouteActivity.this)
                         .setTitle("Permission")
                         .setMessage("Please Share/on Your Location")
                         .setPositiveButton("ok", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
                                 //Prompt the user once explanation has been shown
-                                ActivityCompat.requestPermissions(getActivity(),
+                                ActivityCompat.requestPermissions(SearchRouteActivity.this,
                                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                                         MY_PERMISSIONS_REQUEST_LOCATION);
                             }
@@ -360,7 +369,7 @@ public class ShowSearchResultFragment extends Fragment implements OnMapReadyCall
 
             } else {
                 // No explanation needed, we can request the permission.
-                ActivityCompat.requestPermissions(getActivity(),
+                ActivityCompat.requestPermissions(SearchRouteActivity.this,
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                         MY_PERMISSIONS_REQUEST_LOCATION);
             }
@@ -369,8 +378,6 @@ public class ShowSearchResultFragment extends Fragment implements OnMapReadyCall
             return true;
         }
     }
-
-
 
 
 }

@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.AsyncTask;
@@ -42,6 +43,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.joytechnologies.market.R;
 import com.joytechnologies.market.SearchResult.ShowSearchResultFragment;
+import com.joytechnologies.market.SearchWithRoute.SearchRouteActivity;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -490,13 +492,18 @@ need to implement method for map ready and getting the current location from the
         if (!SearchText.isEmpty()) {
             Toast.makeText(getActivity(), "we will going to do some action", Toast.LENGTH_SHORT).show();
             //now we will call our API to get the data
-            //we will send the data also
-            Bundle bundle = new Bundle();
-            bundle.putString("key", SearchText);
-// set Fragmentclass Arguments
+//            //we will send the data also
+////            Bundle bundle = new Bundle();
+////            bundle.putString("key", SearchText);
+////// set Fragmentclass Arguments
+////
+////            showSearchResultFragment.setArguments(bundle);
+////            SetFragment(showSearchResultFragment);
 
-            showSearchResultFragment.setArguments(bundle);
-            SetFragment(showSearchResultFragment);
+            Intent i = new Intent(getActivity(),SearchRouteActivity.class);
+            i.putExtra("key",SearchText);
+            startActivity(i);
+            getActivity().overridePendingTransition(0,0);
             editText.getText().clear();
 
 
