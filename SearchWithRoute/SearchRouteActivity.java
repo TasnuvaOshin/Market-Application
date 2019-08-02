@@ -4,6 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -33,6 +35,7 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.joytechnologies.market.MainActivity;
 import com.joytechnologies.market.Model.SearchDataModel;
 import com.joytechnologies.market.R;
 import com.joytechnologies.market.SearchResult.FetchURL;
@@ -177,6 +180,12 @@ public class SearchRouteActivity extends AppCompatActivity implements OnMapReady
 
         }
     }
+
+    public void GoToMarketHome(View view) {
+     startActivity(new Intent(SearchRouteActivity.this,MainActivity.class));
+     SearchRouteActivity.this.overridePendingTransition(0,0);
+    }
+
 
     @SuppressLint("StaticFieldLeak")
     public class CallApiData extends AsyncTask<String, String, String> {

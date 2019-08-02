@@ -39,7 +39,6 @@ public class MainActivity extends AppCompatActivity {
         /*
         if permission granted then we will go the map activity
          */
-
         SetFragment(market_home_fragment);
 
     }
@@ -62,5 +61,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event)
+    {
+        if ((keyCode == KeyEvent.KEYCODE_BACK))
+        {
+            finish();
+        }
+        return super.onKeyDown(keyCode, event);
+    }
 }

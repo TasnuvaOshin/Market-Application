@@ -50,9 +50,12 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.navigation.NavigationView;
+import com.joytechnologies.market.MainActivity;
 import com.joytechnologies.market.R;
 import com.joytechnologies.market.SearchResult.ShowSearchResultFragment;
 import com.joytechnologies.market.SearchWithRoute.SearchRouteActivity;
+import com.joytechnologies.market.pages.AboutFragment;
+import com.joytechnologies.market.pages.HowToUseFragment;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -83,6 +86,9 @@ public class Market_Home_Fragment extends Fragment implements OnMapReadyCallback
     private DrawerLayout drawerLayout;
     private Toolbar mToolbar;
     private ImageButton imageButtonDrawer;
+    private HowToUseFragment howToUseFragment;
+    private Market_Home_Fragment market_home_fragment;
+    private AboutFragment aboutFragment;
 
 
     //search
@@ -90,7 +96,6 @@ public class Market_Home_Fragment extends Fragment implements OnMapReadyCallback
     private EditText editText;
     private String SearchText;
     private ImageButton imageButton;
-    private ShowSearchResultFragment showSearchResultFragment;
 /*
 need to implement method for map ready and getting the current location from the map
  */
@@ -108,7 +113,7 @@ need to implement method for map ready and getting the current location from the
         SupportMapFragment supportMapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.f_map);
         supportMapFragment.getMapAsync(this);
 
-        showSearchResultFragment = new ShowSearchResultFragment();
+
         navigationView = view.findViewById(R.id.navView);
         drawerLayout = view.findViewById(R.id.drawerLayout);
         imageButtonDrawer = view.findViewById(R.id.ib_button);
@@ -158,6 +163,14 @@ need to implement method for map ready and getting the current location from the
                 return false;
             }
         });
+
+
+
+        //fragment init
+
+        howToUseFragment  = new HowToUseFragment();
+        aboutFragment = new AboutFragment();
+        market_home_fragment = new Market_Home_Fragment();
         return view;
     }
 
@@ -167,6 +180,18 @@ need to implement method for map ready and getting the current location from the
             public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
                 switch (menuItem.getItemId()) {
                     //menu handle
+
+                    case R.id.menu_home:
+                        SetFragment(market_home_fragment);
+                        break;
+
+                    case R.id.menu_nearby:
+                        SetFragment(aboutFragment);
+                        break;
+
+                    case  R.id.menu_use:
+                        SetFragment(howToUseFragment);
+                        break;
 
                 }
 
@@ -223,7 +248,7 @@ need to implement method for map ready and getting the current location from the
 
                         currentLang = location.getLatitude();
                         currentLong = location.getLongitude();
-                        gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 15f));
+                        gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(location.getLatitude(), location.getLongitude()), 12f));
                         Log.d("lat", String.valueOf(currentLang));
                         Log.d("long", String.valueOf(currentLong));
 
@@ -276,6 +301,8 @@ need to implement method for map ready and getting the current location from the
                                 ActivityCompat.requestPermissions(getActivity(),
                                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                                         MY_PERMISSIONS_REQUEST_LOCATION);
+                                startActivity(new Intent(getActivity(),MainActivity.class));
+                                getActivity().overridePendingTransition(0,0);
                             }
                         })
                         .create()
@@ -287,10 +314,14 @@ need to implement method for map ready and getting the current location from the
                 ActivityCompat.requestPermissions(getActivity(),
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                         MY_PERMISSIONS_REQUEST_LOCATION);
+
             }
+
             return false;
         } else {
+
             return true;
+
         }
     }
 
@@ -576,5 +607,6 @@ need to implement method for map ready and getting the current location from the
         fragmentTransaction.addToBackStack("my_fragment").commit();
 
     }
+
 
 }
